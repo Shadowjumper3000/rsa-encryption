@@ -44,10 +44,20 @@ def _format_encrypted_block(encrypted_value: int, modulus: int) -> str:
 
 
 def rsa_encrypt(alphabet: str, modulus: int, public_exponent: int, message: str) -> str:
-    """Encrypt `message` using RSA with improved block handling.
+    """
+    Encrypt a message using RSA and a custom alphabet.
 
-    Orchestrates validation, mapping, chunking, padding, numeric encryption,
-    and formatting of encrypted output.
+    Args:
+        alphabet (str): The alphabet string to use for encoding.
+        modulus (int): RSA modulus (n).
+        public_exponent (int): RSA public exponent (e).
+        message (str): The plaintext message to encrypt.
+
+    Returns:
+        str: The encrypted message as a numeric string.
+
+    Example:
+        >>> encrypted = rsa_encrypt("abc ", n, e, "cab")
     """
     _validate_message(message)
 

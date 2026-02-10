@@ -55,11 +55,23 @@ def _block_to_chars(decrypted_block: str, num_to_char_map: dict[str, str]) -> st
 def rsa_decrypt(
     alphabet: str, modulus: int, private_exponent: int, encrypted_message: str
 ) -> str:
-    """High-level RSA decryption using the small helper functions above.
+    """
+    Decrypt an RSA-encrypted message using a custom alphabet.
 
-    The function orchestrates validation, size calculation, splitting, numeric
-    decryption and mapping back to characters. It raises ValueError on
-    invalid input or decryption errors.
+    Args:
+        alphabet (str): The alphabet string to use for decoding.
+        modulus (int): RSA modulus (n).
+        private_exponent (int): RSA private exponent (d).
+        encrypted_message (str): The encrypted message as a numeric string.
+
+    Returns:
+        str: The decrypted plaintext message.
+
+    Raises:
+        ValueError: If decryption fails or input is invalid.
+
+    Example:
+        >>> decrypted = rsa_decrypt("abc ", n, d, encrypted)
     """
     _, num_to_char_map = create_char_mappings(alphabet)
 

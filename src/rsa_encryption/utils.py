@@ -6,20 +6,20 @@ import math
 from typing import List, Tuple
 
 
-def calculate_block_size(modulus: int, alphabet_length: int) -> int:
+def calculate_block_size(modulus: int, _alphabet_length: int) -> int:
     """
     Calculate the maximum safe block size for the given modulus.
     Uses log-based approach for accurate calculation.
 
     Args:
         modulus (int): The RSA modulus (n)
-        alphabet_length (int): Length of the alphabet being used
+        _alphabet_length (int): Length of the alphabet being used
 
     Returns:
         int: Maximum safe block size in digits
     """
     # Calculate maximum digits that can safely fit in modulus
-    max_digits = int(math.log10(modulus))
+    max_digits = int(math.log10(modulus)) + 1
 
     # Ensure even number for proper character pairing
     if max_digits % 2 == 1:

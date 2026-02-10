@@ -1,11 +1,14 @@
-import unittest
-import sys
-import os
+"""
+Integration tests for the RSA encryption system.
+Tests cover:
+- Full encryption-decryption cycles with various messages
+- Different alphabet configurations
+- Handling of long messages that require multiple blocks
+- Consistency across multiple round trips
+"""
 
-# Ensure tests import the package implementation from src/
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
-)
+import unittest
+
 
 from rsa_encryption import generate_keys, rsa_encrypt, rsa_decrypt
 

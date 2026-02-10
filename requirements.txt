@@ -1,0 +1,8 @@
+# Requirements for rsa-encryption project
+# Core dependencies (for optional crypto prime generation)
+
+pycryptodome>=3.9.0  # For secure prime generation (optional)
+sympy>=1.8            # For pure-Python prime generation (optional)
+
+# All other imports are from the Python standard library and do not require installation:
+# argparse, sys, json, random, warnings, importlib, typing, math, unittest, os

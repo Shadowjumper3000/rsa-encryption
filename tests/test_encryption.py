@@ -1,11 +1,13 @@
-import unittest
-import sys
-import os
+"""
+Unit tests for RSA encryption functionality.
+Tests cover:
+- Basic message encryption
+- Encryption with extended alphabet
+- Handling of spaces and edge cases
+- Invalid input scenarios
+"""
 
-# Ensure tests import the package implementation from src/
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
-)
+import unittest
 
 from rsa_encryption.encryption import rsa_encrypt
 from rsa_encryption.key_generation import generate_keys

@@ -9,36 +9,24 @@ commands previously provided by the top-level `main.py`.
 import argparse
 import sys
 import json
-import importlib
-from functools import lru_cache
-from importlib import resources
-
 from . import generate_keys, rsa_encrypt, rsa_decrypt
+from .libraries import ALPHABETS
 
 
-@lru_cache(maxsize=1)
+def get_alphabet(name_or_string):
+    """Return the alphabet string for a given name or custom string."""
+    if name_or_string in ALPHABETS:
+        return ALPHABETS[name_or_string]
+    return name_or_string
+
+
 def _load_alphabets():
+    """Load alphabets directly from `libraries.py`.
+
+    This intentionally removes JSON/resource fallbacks: if `libraries` is
+    not importable the function will raise ImportError.
     """
-    Load alphabets preferring a Python module (fast import), falling back
-    to the packaged JSON resource.
-
-    :return: Dictionary of alphabets
-    """
-    # Prefer a fast module import which is cached in sys.modules
-    import importlib
-    from functools import lru_cache
-
-    from . import generate_keys, rsa_encrypt, rsa_decrypt
-
-    @lru_cache(maxsize=1)
-    def _load_alphabets():
-        """Load alphabets directly from `libraries.py`.
-
-        This intentionally removes JSON/resource fallbacks: if `libraries` is
-        not importable the function will raise ImportError.
-        """
-        mod = importlib.import_module(f"{__package__}.libraries")
-        return getattr(mod, "ALPHABETS")
+    return ALPHABETS
 
 
 def generate_keys_command(args):
@@ -160,7 +148,7 @@ def alphabet_info_command(_args):
     :param args: Command-line arguments
     :return: None
     """
-    alphabets = _load_alphabets()
+    alphabets = ALPHABETS
 
     print("Available alphabet types:")
     for name, alphabet in alphabets.items():

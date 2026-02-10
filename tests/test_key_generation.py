@@ -1,11 +1,13 @@
-import unittest
-import sys
-import os
+"""
+Unit tests for RSA key generation functionality.
+Tests cover:
+- GCD function correctness
+- Key generation consistency
+- Mathematical properties of generated keys
+"""
 
-# Ensure tests import the package implementation from src/
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
-)
+import unittest
+
 
 from rsa_encryption.key_generation import generate_keys, gcd, PRIME_NUMBERS
 
@@ -37,7 +39,7 @@ class TestKeyGeneration(unittest.TestCase):
         """Test that key generation produces consistent results."""
         public_key, private_key = generate_keys()
         n_pub, e = public_key
-        n_priv, d = private_key
+        n_priv, _d = private_key
 
         # Both keys should share the same modulus
         self.assertEqual(n_pub, n_priv)

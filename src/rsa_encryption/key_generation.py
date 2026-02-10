@@ -13,18 +13,20 @@ Design goals and changes:
 - Backward compatible defaults preserve existing behavior.
 """
 
-from typing import Callable, Tuple
-
+import importlib
 import random
 import warnings
-import importlib
+from typing import Callable, Tuple
+
+import sympy
+from Crypto.Util import number
+
+from .utils import gcd
 
 
 # Load static primes from a packaged resource. This keeps the large list out
 # of the code and makes it easy to update or replace without editing Python.
 def _load_static_primes() -> list[int]:
-    # Load from the `libraries` module (single source of truth). If it's
-    # not importable, warn and fall back to a minimal built-in set.
     try:
         mod = importlib.import_module(f"{__package__}.libraries")
         data = getattr(mod, "PRIME_NUMBERS")
@@ -42,8 +44,6 @@ def _load_static_primes() -> list[int]:
 
 PRIME_NUMBERS = _load_static_primes()
 
-from .utils import gcd
-
 
 def _prime_factory_from_crypto(bits: int) -> int:
     """Generate a prime using PyCryptodome if available.
@@ -51,7 +51,6 @@ def _prime_factory_from_crypto(bits: int) -> int:
     Falls back by raising ImportError if the library is missing.
     """
     try:
-        from Crypto.Util import number
 
         return number.getPrime(bits)
     except Exception as exc:
@@ -64,8 +63,6 @@ def _prime_factory_from_sympy(bits: int) -> int:
     This is a slower pure-Python fallback compared to PyCryptodome.
     """
     try:
-        import sympy
-
         low = 1 << (bits - 1)
         high = (1 << bits) - 1
         return int(sympy.randprime(low, high))
@@ -73,7 +70,7 @@ def _prime_factory_from_sympy(bits: int) -> int:
         raise ImportError("sympy not available") from exc
 
 
-def _prime_factory_from_static(bits: int) -> int:
+def _prime_factory_from_static(_bits: int) -> int:
     """Select a prime from the static `PRIME_NUMBERS` list.
 
     This is intentionally small and deterministic - suitable only for
@@ -92,9 +89,6 @@ def _select_prime_factory(prefer: str = "auto") -> Callable[[int], int]:
 
     if prefer == "crypto" or prefer == "auto":
         try:
-            # Test import once
-            from Crypto.Util import number
-
             return _prime_factory_from_crypto
         except Exception:
             if prefer == "crypto":
@@ -102,8 +96,6 @@ def _select_prime_factory(prefer: str = "auto") -> Callable[[int], int]:
 
     if prefer == "sympy" or prefer == "auto":
         try:
-            import sympy
-
             return _prime_factory_from_sympy
         except Exception:
             if prefer == "sympy":
@@ -154,7 +146,7 @@ def generate_keys(
     use_crypto: bool = False,
     bits: int = 16,
     prefer: str = "auto",
-) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+) -> tuple[tuple[int, int], tuple[int, int]]:
     """Generate an RSA key pair.
 
     Args:

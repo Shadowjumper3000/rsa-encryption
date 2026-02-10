@@ -1,3 +1,37 @@
+## Library Usage
+
+You can use the RSA encryption library in your own Python code after installing in editable mode:
+
+```bash
+pip install -e .
+```
+
+### Example: Encrypt and Decrypt a Message
+
+```python
+from rsa_encryption.key_generation import generate_keys
+from rsa_encryption.encryption import rsa_encrypt
+from rsa_encryption.decryption import rsa_decrypt
+
+alphabet = "abcdefghijklmnopqrstuvwxyz "
+public_key, private_key = generate_keys()
+n, e = public_key
+n, d = private_key
+message = "hello world"
+
+encrypted = rsa_encrypt(alphabet, n, e, message)
+decrypted = rsa_decrypt(alphabet, n, d, encrypted)
+print("Encrypted:", encrypted)
+print("Decrypted:", decrypted)
+```
+
+### Public API
+
+- `generate_keys(use_crypto=False, bits=16, prefer="auto")` → `((n, e), (n, d))`: Generate RSA key pairs.
+- `rsa_encrypt(alphabet, n, e, message)` → `str`: Encrypt a message.
+- `rsa_decrypt(alphabet, n, d, encrypted_message)` → `str`: Decrypt a message.
+
+See docstrings in the code for more details.
 # RSA Encryption Tool
 
 A Python implementation of RSA encryption for educational purposes with both CLI and library interfaces, demonstrating public-key cryptography concepts.
