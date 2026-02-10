@@ -1,7 +1,8 @@
 """
-RSA Encryption Package
+RSA Encryption Package (src layout)
 
-A Python implementation of RSA encryption for educational purposes.
+This package is the same as the original `rsa_encryption` package
+but placed under `src/` for a standard src-layout Python project.
 """
 
 from .key_generation import generate_keys, gcd

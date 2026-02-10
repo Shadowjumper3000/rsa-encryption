@@ -86,127 +86,52 @@ You can also use the package as a Python library:
 
 ```python
 from rsa_encryption import generate_keys, rsa_encrypt, rsa_decrypt
+"""RSA Encryption — concise
 
-# Generate RSA key pair
-public_key, private_key = generate_keys()
-modulus, public_exp = public_key
-_, private_exp = private_key
+Small educational RSA implementation (key generation, encryption,
+decryption). Refactors split encryption/decryption into small helpers and
+moved shared utilities into `src/rsa_encryption/utils.py`.
 
-# Define alphabet
-alphabet = "abcdefghijklmnopqrstuvwxyz "
+Quickstart
+----------
 
-# Encrypt a message
-message = "hello world"
-encrypted = rsa_encrypt(alphabet, modulus, public_exp, message)
-print(f"Encrypted: {encrypted}")
+Clone and run tests:
 
-# Decrypt the message
-decrypted = rsa_decrypt(alphabet, modulus, private_exp, encrypted)
-print(f"Decrypted: {decrypted}")
-```
-### Extended Alphabet Example
-
-```python
-from rsa_encryption import generate_keys, rsa_encrypt, rsa_decrypt
-
-# Extended alphabet with uppercase, lowercase, numbers, and space
-alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
-
-public_key, private_key = generate_keys()
-modulus, public_exp = public_key
-_, private_exp = private_key
-
-message = "Hello World 123"
-encrypted = rsa_encrypt(alphabet, modulus, public_exp, message)
-decrypted = rsa_decrypt(alphabet, modulus, private_exp, encrypted)
-
-assert decrypted == message  # Perfect round-trip
-```
-
-## Project Structure
-
-```
-RSA-Encryption/
-├── main.py                  # CLI interface
-├── rsa_encryption/          # Main package
-│   ├── __init__.py         # Package interface
-│   ├── key_generation.py   # RSA key generation
-│   ├── encryption.py       # Message encryption
-│   ├── decryption.py       # Message decryption
-│   └── utils.py            # Utility functions
-├── tests/                  # Comprehensive test suite
-│   ├── test_key_generation.py
-│   ├── test_encryption.py
-│   ├── test_decryption.py
-│   └── test_integration.py
-├── requirements.txt        # Dependencies
-└── README.md              # This file
-```
-
-## Running Tests
-
-Run the complete test suite:
 ```bash
+git clone https://github.com/Shadowjumper3000/RSA-Encryption.git
+cd RSA-Encryption
+python -m venv .venv
+source .venv/bin/activate
 python -m unittest discover tests -v
 ```
 
-Run specific test modules:
-```bash
-python -m unittest tests.test_encryption -v
-python -m unittest tests.test_decryption -v
-python -m unittest tests.test_integration -v
+Library usage (example):
+
+```python
+from rsa_encryption import generate_keys, rsa_encrypt, rsa_decrypt
+pub, priv = generate_keys()
+n, e = pub
+_, d = priv
+alphabet = "abcdefghijklmnopqrstuvwxyz "
+msg = "hello world"
+enc = rsa_encrypt(alphabet, n, e, msg)
+dec = rsa_decrypt(alphabet, n, d, enc)
+assert dec == msg
 ```
 
-## Technical Details
+CLI: use `main.py` for `generate-keys`, `encrypt`, `decrypt`, and
+`alphabet-info` commands (see CLI help for details).
 
-### Key Generation
-- Uses randomly selected prime numbers from a curated list
-- Implements the Extended Euclidean Algorithm for modular inverse calculation
-- Generates keys with standard RSA public exponent (65537)
+Notes
+-----
 
-### Encryption/Decryption
-- Character-to-number mapping using zero-padded indices
-- Intelligent block size calculation based on modulus size
-- Proper padding handling for block boundaries
-- Error handling for invalid characters and malformed input
+- Educational only — not production-ready. Use audited libraries and OAEP
+  padding for real-world use.
+- Recent refactors preserved public APIs; full test suite passes.
 
-### Security Considerations
-- **Educational Purpose**: This implementation is designed for learning RSA concepts
-- **Not Production Ready**: Uses smaller prime numbers and lacks padding schemes like OAEP
-- **No Side-Channel Protection**: Implementation doesn't protect against timing attacks
+Contributing
+------------
 
+PRs welcome. Open an issue for major changes.
+"""
 ## Development
-
-### Setting up Development Environment
-
-```bash
-# Clone the repository
-git clone https://github.com/Shadowjumper3000/RSA-Encryption.git
-cd RSA-Encryption
-
-# Create virtual environment (optional)
-python -m venv .venv
-source .venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-## Requirements
-
-- Python 3.8 or higher
-- No external runtime dependencies (pure Python implementation)
-
-## License
-
-This project is provided for educational purposes. Feel free to use, modify, and distribute as needed.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-## Educational Note
-
-This RSA implementation is designed specifically for educational purposes to demonstrate:
-- Public-key cryptography concepts
-- RSA algorithm mechanics
-- Python package development best practices
-
-For production applications, use established cryptographic libraries like `cryptography` or `PyCryptodome`.

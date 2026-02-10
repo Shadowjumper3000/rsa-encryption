@@ -56,3 +56,15 @@ def create_char_mappings(alphabet: str) -> Tuple[dict, dict]:
     char_to_num_map = {char: str(i).zfill(2) for i, char in enumerate(alphabet)}
     num_to_char_map = {str(i).zfill(2): char for i, char in enumerate(alphabet)}
     return char_to_num_map, num_to_char_map
+
+
+def gcd(a: int, b: int) -> int:
+    """
+    Return the greatest common divisor of ``a`` and ``b`` using the Euclidean algorithm.
+
+    This function is used by RSA key generation and is a general-purpose
+    utility suitable for placement in this module.
+    """
+    while b:
+        a, b = b, a % b
+    return a

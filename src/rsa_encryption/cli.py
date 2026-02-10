@@ -1,43 +1,53 @@
 #!/usr/bin/env python3
 """
-RSA Encryption CLI Tool
+CLI entrypoint for the rsa_encryption package.
 
-A command-line interface for RSA encryption operations including key generation,
-message encryption, and message decryption with configurable alphabet sizes.
+Loads alphabets from the packaged JSON file and exposes the same
+commands previously provided by the top-level `main.py`.
 """
 
 import argparse
 import sys
 import json
-from rsa_encryption import generate_keys, rsa_encrypt, rsa_decrypt
+import importlib
+from functools import lru_cache
+from importlib import resources
+
+from . import generate_keys, rsa_encrypt, rsa_decrypt
 
 
-def get_alphabet(alphabet_type):
+@lru_cache(maxsize=1)
+def _load_alphabets():
     """
-    Get alphabet based on the specified type.
+    Load alphabets preferring a Python module (fast import), falling back
+    to the packaged JSON resource.
 
-    Args:
-        alphabet_type (str): Type of alphabet ('basic', 'extended', 'full', or 'custom')
-
-    Returns:
-        str: The alphabet string
+    :return: Dictionary of alphabets
     """
-    alphabets = {
-        "basic": "abcdefghijklmnopqrstuvwxyz ",
-        "extended": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ",
-        "full": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ",
-        "numeric": "0123456789 ",
-    }
+    # Prefer a fast module import which is cached in sys.modules
+    import importlib
+    from functools import lru_cache
 
-    if alphabet_type in alphabets:
-        return alphabets[alphabet_type]
-    else:
-        # Custom alphabet
-        return alphabet_type
+    from . import generate_keys, rsa_encrypt, rsa_decrypt
+
+    @lru_cache(maxsize=1)
+    def _load_alphabets():
+        """Load alphabets directly from `libraries.py`.
+
+        This intentionally removes JSON/resource fallbacks: if `libraries` is
+        not importable the function will raise ImportError.
+        """
+        mod = importlib.import_module(f"{__package__}.libraries")
+        return getattr(mod, "ALPHABETS")
 
 
 def generate_keys_command(args):
-    """Generate RSA key pair and optionally save to files."""
+    """
+    Generate RSA key pair and optionally save to a file.
+
+    :param args: Command-line arguments
+    :return: None
+    """
     public_key, private_key = generate_keys()
 
     keys_data = {
@@ -46,12 +56,10 @@ def generate_keys_command(args):
     }
 
     if args.output:
-        # Save keys to file
-        with open(args.output, "w") as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             json.dump(keys_data, f, indent=2)
         print(f"Keys saved to {args.output}")
     else:
-        # Print keys to stdout
         print("Generated RSA Key Pair:")
         print(f"Public Key (n, e): ({public_key[0]}, {public_key[1]})")
         print(f"Private Key (n, d): ({private_key[0]}, {private_key[1]})")
@@ -60,12 +68,16 @@ def generate_keys_command(args):
 
 
 def encrypt_command(args):
-    """Encrypt a message using RSA encryption."""
+    """
+    Encrypt a message using RSA encryption with the provided public key and alphabet.
+
+    :param args: Command-line arguments
+    :return: None
+    """
     alphabet = get_alphabet(args.alphabet)
 
-    # Load keys
     if args.key_file:
-        with open(args.key_file, "r") as f:
+        with open(args.key_file, "r", encoding="utf-8") as f:
             keys_data = json.load(f)
         n = keys_data["public_key"]["n"]
         e = keys_data["public_key"]["e"]
@@ -79,7 +91,6 @@ def encrypt_command(args):
         )
         sys.exit(1)
 
-    # Get message
     message = args.message or input("Enter message to encrypt: ")
 
     try:
@@ -87,7 +98,7 @@ def encrypt_command(args):
         print(f"Encrypted message: {encrypted}")
 
         if args.output:
-            with open(args.output, "w") as f:
+            with open(args.output, "w", encoding="utf-8") as f:
                 f.write(encrypted)
             print(f"Encrypted message saved to {args.output}")
 
@@ -97,12 +108,16 @@ def encrypt_command(args):
 
 
 def decrypt_command(args):
-    """Decrypt a message using RSA decryption."""
+    """
+    Decrypt a message using RSA decryption with the provided private key and alphabet.
+
+    :param args: Command-line arguments
+    :return: None
+    """
     alphabet = get_alphabet(args.alphabet)
 
-    # Load keys
     if args.key_file:
-        with open(args.key_file, "r") as f:
+        with open(args.key_file, "r", encoding="utf-8") as f:
             keys_data = json.load(f)
         n = keys_data["private_key"]["n"]
         d = keys_data["private_key"]["d"]
@@ -116,11 +131,10 @@ def decrypt_command(args):
         )
         sys.exit(1)
 
-    # Get encrypted message
     if args.message:
         encrypted_message = args.message
     elif args.input:
-        with open(args.input, "r") as f:
+        with open(args.input, "r", encoding="utf-8") as f:
             encrypted_message = f.read().strip()
     else:
         encrypted_message = input("Enter encrypted message: ")
@@ -130,7 +144,7 @@ def decrypt_command(args):
         print(f"Decrypted message: {decrypted}")
 
         if args.output:
-            with open(args.output, "w") as f:
+            with open(args.output, "w", encoding="utf-8") as f:
                 f.write(decrypted)
             print(f"Decrypted message saved to {args.output}")
 
@@ -139,14 +153,14 @@ def decrypt_command(args):
         sys.exit(1)
 
 
-def alphabet_info_command(args):
-    """Show information about available alphabets."""
-    alphabets = {
-        "basic": "abcdefghijklmnopqrstuvwxyz ",
-        "extended": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ",
-        "full": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ",
-        "numeric": "0123456789 ",
-    }
+def alphabet_info_command(_args):
+    """
+    Display available alphabet types and their characters.
+
+    :param args: Command-line arguments
+    :return: None
+    """
+    alphabets = _load_alphabets()
 
     print("Available alphabet types:")
     for name, alphabet in alphabets.items():
@@ -156,39 +170,19 @@ def alphabet_info_command(args):
 
 
 def main():
-    """Main CLI entry point."""
+    """
+    Main entry point for the RSA Encryption CLI tool.
+    """
     parser = argparse.ArgumentParser(
         description="RSA Encryption CLI Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Generate keys and save to file
-  python main.py generate-keys --output keys.json
-  
-  # Generate keys and print to console
-  python main.py generate-keys
-  
-  # Encrypt with key file
-  python main.py encrypt --key-file keys.json --message "hello world" --alphabet basic
-  
-  # Encrypt with explicit keys
-  python main.py encrypt --n 1091218173 --e 65537 --message "hello" --alphabet basic
-  
-  # Decrypt with key file
-  python main.py decrypt --key-file keys.json --message "123456789" --alphabet basic
-  
-  # Show alphabet information
-  python main.py alphabet-info
-        """,
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # Generate keys command
     gen_parser = subparsers.add_parser("generate-keys", help="Generate RSA key pair")
     gen_parser.add_argument("--output", "-o", help="Output file for keys (JSON format)")
 
-    # Encrypt command
     encrypt_parser = subparsers.add_parser("encrypt", help="Encrypt a message")
     encrypt_parser.add_argument("--message", "-m", help="Message to encrypt")
     encrypt_parser.add_argument(
@@ -208,7 +202,6 @@ Examples:
         "--output", "-o", help="Output file for encrypted message"
     )
 
-    # Decrypt command
     decrypt_parser = subparsers.add_parser("decrypt", help="Decrypt a message")
     decrypt_parser.add_argument("--message", "-m", help="Encrypted message to decrypt")
     decrypt_parser.add_argument(
@@ -231,7 +224,6 @@ Examples:
         "--output", "-o", help="Output file for decrypted message"
     )
 
-    # Alphabet info command
     subparsers.add_parser("alphabet-info", help="Show available alphabet types")
 
     args = parser.parse_args()
