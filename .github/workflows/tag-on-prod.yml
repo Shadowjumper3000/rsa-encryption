@@ -20,6 +20,12 @@ jobs:
           version=$(grep '^version' pyproject.toml | head -n1 | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
+      - name: Set up git for GitHub Actions
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
       - name: Create tag if not exists
         run: |
           git fetch --tags
