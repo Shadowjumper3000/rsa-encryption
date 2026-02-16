@@ -1,4 +1,4 @@
-name: Tag on prod push
+name: Create Tagged Release
 
 description: >
   Automatically create and push a version tag (vX.Y.Z) when code is pushed to the prod branch.
