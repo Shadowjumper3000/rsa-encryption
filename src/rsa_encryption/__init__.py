@@ -1,13 +1,24 @@
-"""
-RSA Encryption Package (src layout)
+"""Public package API for ``rsa_encryption``."""
 
-This package is the same as the original `rsa_encryption` package
-but placed under `src/` for a standard src-layout Python project.
-"""
+from importlib.metadata import PackageNotFoundError, version
 
-from .key_generation import generate_keys, gcd
-from .encryption import rsa_encrypt
 from .decryption import rsa_decrypt
+from .encryption import rsa_encrypt
+from .key_generation import PRIME_NUMBERS, generate_keys, gcd
+from .libraries import ALPHABETS
+from .exceptions import ValidationError
 
-__version__ = "1.0.0"
-__all__ = ["generate_keys", "gcd", "rsa_encrypt", "rsa_decrypt"]
+try:
+    __version__ = version("rsa-encryption")
+except PackageNotFoundError:
+    __version__ = "2.0.2"
+
+__all__ = [
+    "ALPHABETS",
+    "PRIME_NUMBERS",
+    "generate_keys",
+    "gcd",
+    "rsa_encrypt",
+    "rsa_decrypt",
+    "ValidationError",
+]

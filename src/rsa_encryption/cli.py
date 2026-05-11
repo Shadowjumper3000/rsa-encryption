@@ -2,15 +2,18 @@
 """
 CLI entrypoint for the rsa_encryption package.
 
-Loads alphabets from the packaged JSON file and exposes the same
-commands previously provided by the top-level `main.py`.
+Loads alphabets from packaged Python module constants and exposes
+generate-keys, encrypt, decrypt, and alphabet-info commands.
 """
 
 import argparse
 import sys
 import json
+import os
+import tempfile
 from . import generate_keys, rsa_encrypt, rsa_decrypt
 from .libraries import ALPHABETS
+from .exceptions import ValidationError
 
 
 def get_alphabet(name_or_string):
@@ -18,15 +21,6 @@ def get_alphabet(name_or_string):
     if name_or_string in ALPHABETS:
         return ALPHABETS[name_or_string]
     return name_or_string
-
-
-def _load_alphabets():
-    """Load alphabets directly from `libraries.py`.
-
-    This intentionally removes JSON/resource fallbacks: if `libraries` is
-    not importable the function will raise ImportError.
-    """
-    return ALPHABETS
 
 
 def generate_keys_command(args):
@@ -44,8 +38,12 @@ def generate_keys_command(args):
     }
 
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as f:
-            json.dump(keys_data, f, indent=2)
+        # Atomic write: write to temp file then replace to avoid partial writes
+        dirpath = os.path.dirname(os.path.abspath(args.output)) or "."
+        with tempfile.NamedTemporaryFile("w", delete=False, dir=dirpath, encoding="utf-8") as tmp:
+            json.dump(keys_data, tmp, indent=2)
+            tmp_name = tmp.name
+        os.replace(tmp_name, args.output)
         print(f"Keys saved to {args.output}")
     else:
         print("Generated RSA Key Pair:")
@@ -73,24 +71,30 @@ def encrypt_command(args):
         n = args.n
         e = args.e
 
-    if not n or not e:
+    if n is None or e is None:
         print(
             "Error: Public key (n, e) must be provided either via --key-file or --n and --e"
         )
         sys.exit(1)
 
-    message = args.message or input("Enter message to encrypt: ")
+    if args.stdin and not args.message:
+        message = sys.stdin.read()
+    else:
+        message = args.message or input("Enter message to encrypt: ")
 
     try:
         encrypted = rsa_encrypt(alphabet, n, e, message)
         print(f"Encrypted message: {encrypted}")
 
         if args.output:
-            with open(args.output, "w", encoding="utf-8") as f:
-                f.write(encrypted)
+            dirpath = os.path.dirname(os.path.abspath(args.output)) or "."
+            with tempfile.NamedTemporaryFile("w", delete=False, dir=dirpath, encoding="utf-8") as tmp:
+                tmp.write(encrypted)
+                tmp_name = tmp.name
+            os.replace(tmp_name, args.output)
             print(f"Encrypted message saved to {args.output}")
 
-    except ValueError as error:
+    except ValidationError as error:
         print(f"Encryption error: {error}")
         sys.exit(1)
 
@@ -113,7 +117,7 @@ def decrypt_command(args):
         n = args.n
         d = args.d
 
-    if not n or not d:
+    if n is None or d is None:
         print(
             "Error: Private key (n, d) must be provided either via --key-file or --n and --d"
         )
@@ -124,6 +128,8 @@ def decrypt_command(args):
     elif args.input:
         with open(args.input, "r", encoding="utf-8") as f:
             encrypted_message = f.read().strip()
+    elif args.stdin:
+        encrypted_message = sys.stdin.read().strip()
     else:
         encrypted_message = input("Enter encrypted message: ")
 
@@ -136,7 +142,7 @@ def decrypt_command(args):
                 f.write(decrypted)
             print(f"Decrypted message saved to {args.output}")
 
-    except ValueError as error:
+    except ValidationError as error:
         print(f"Decryption error: {error}")
         sys.exit(1)
 
@@ -174,6 +180,11 @@ def main():
     encrypt_parser = subparsers.add_parser("encrypt", help="Encrypt a message")
     encrypt_parser.add_argument("--message", "-m", help="Message to encrypt")
     encrypt_parser.add_argument(
+        "--stdin",
+        action="store_true",
+        help="Read message from standard input when no message is provided",
+    )
+    encrypt_parser.add_argument(
         "--alphabet",
         "-a",
         default="basic",
@@ -194,6 +205,11 @@ def main():
     decrypt_parser.add_argument("--message", "-m", help="Encrypted message to decrypt")
     decrypt_parser.add_argument(
         "--input", "-i", help="Input file containing encrypted message"
+    )
+    decrypt_parser.add_argument(
+        "--stdin",
+        action="store_true",
+        help="Read encrypted message from standard input when no message or input file is provided",
     )
     decrypt_parser.add_argument(
         "--alphabet",

@@ -42,7 +42,14 @@ class TestEncryption(unittest.TestCase):
 
     def test_encrypt_invalid_characters(self):
         """Test that invalid characters raise ValueError."""
-        invalid_messages = ["hello!", "test@message", "número"]
+        invalid_messages = [
+            "hello!",
+            "test@message",
+            "número",
+            "line\nbreak",
+            "null\0byte",
+            "emoji" + chr(0x1F600),
+        ]
 
         for message in invalid_messages:
             with self.subTest(message=message):

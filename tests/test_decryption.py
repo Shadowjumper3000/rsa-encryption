@@ -91,6 +91,22 @@ class TestDecryption(unittest.TestCase):
                         self.alphabet, self.modulus, self.priv_exp, invalid_input
                     )
 
+    def test_decrypt_rejects_truncated_ciphertext(self):
+        """Test decryption rejects ciphertext with invalid block length."""
+        message = "hello"
+        encrypted = rsa_encrypt(self.alphabet, self.modulus, self.pub_exp, message)
+
+        with self.assertRaises(ValueError):
+            rsa_decrypt(self.alphabet, self.modulus, self.priv_exp, encrypted[:-1])
+
+    def test_decrypt_rejects_invalid_padding_sequence(self):
+        """Test decryption rejects non-tail data after a padding token."""
+        # Craft a block where tokens are [pad_token, valid_token] for
+        # alphabet size 27 -> pad token "27", valid token "01".
+        # With d=1 and large modulus, decrypted block remains "2701".
+        with self.assertRaises(ValueError):
+            rsa_decrypt(self.alphabet, 100000, 1, "002701")
+
 
 if __name__ == "__main__":
     unittest.main()

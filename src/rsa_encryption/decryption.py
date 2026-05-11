@@ -5,16 +5,30 @@ responsibilities: validation, size calculation, block splitting, numeric
 decryption, formatting, and mapping digits back to characters.
 """
 
-from .utils import calculate_block_size, create_char_mappings, split_into_chunks
+from typing import List, Dict, Tuple
+
+from .exceptions import ValidationError
+
+from .utils import (
+    calculate_block_size,
+    create_char_mappings,
+    split_into_chunks,
+    validate_alphabet,
+)
 
 
-def _validate_encrypted_message(encrypted_message: str) -> None:
+def _validate_encrypted_message(
+    encrypted_message: str,
+    encrypted_block_size: int,
+) -> None:
     """Raise ValueError for invalid encrypted input."""
     if not encrypted_message or not encrypted_message.isdigit():
-        raise ValueError("Invalid encrypted message")
+        raise ValidationError("Invalid encrypted message")
+    if len(encrypted_message) % encrypted_block_size != 0:
+        raise ValidationError("Invalid encrypted message length")
 
 
-def _calculate_sizes(modulus: int, alphabet_len: int) -> tuple[int, int]:
+def _calculate_sizes(modulus: int, alphabet_len: int) -> Tuple[int, int]:
     """Return (block_size, encrypted_block_size)."""
     block_size = calculate_block_size(modulus, alphabet_len)
     encrypted_block_size = len(str(modulus))
@@ -23,7 +37,7 @@ def _calculate_sizes(modulus: int, alphabet_len: int) -> tuple[int, int]:
 
 def _split_encrypted_blocks(
     encrypted_message: str, encrypted_block_size: int
-) -> list[str]:
+) -> List[str]:
     """Split the full encrypted string into fixed-size numeric blocks."""
     return split_into_chunks(encrypted_message, encrypted_block_size)
 
@@ -38,17 +52,35 @@ def _format_decrypted_block(block_value: int, block_size: int) -> str:
     return str(block_value).zfill(block_size)
 
 
-def _block_to_chars(decrypted_block: str, num_to_char_map: dict[str, str]) -> str:
+def _block_to_chars(
+    decrypted_block: str,
+    num_to_char_map: Dict[str, str],
+    pad_token: str,
+    symbol_width: int,
+) -> str:
     """Convert a decrypted numeric block (decimal string) into characters.
 
-    Pairs that are not present in `num_to_char_map` are treated as padding
-    and skipped.
+    Padding tokens are allowed only at the tail of the block. Unknown tokens
+    and non-tail padding are treated as corruption and raise ValueError.
     """
-    out: list[str] = []
-    for i in range(0, len(decrypted_block), 2):
-        pair = decrypted_block[i : i + 2]
-        if pair in num_to_char_map:
-            out.append(num_to_char_map[pair])
+    out: List[str] = []
+    tokens = split_into_chunks(decrypted_block, symbol_width)
+    if any(len(token) != symbol_width for token in tokens):
+        raise ValidationError("Invalid decrypted block width")
+
+    seen_padding = False
+    for token in tokens:
+        if token == pad_token:
+            seen_padding = True
+            continue
+
+        if seen_padding:
+            raise ValidationError("Invalid padding sequence")
+
+        if token not in num_to_char_map:
+            raise ValidationError("Invalid token in decrypted block")
+
+        out.append(num_to_char_map[token])
     return "".join(out)
 
 
@@ -73,18 +105,19 @@ def rsa_decrypt(
     Example:
         >>> decrypted = rsa_decrypt("abc ", n, d, encrypted)
     """
-    _, num_to_char_map = create_char_mappings(alphabet)
+    validate_alphabet(alphabet)
+    _, num_to_char_map, pad_token, symbol_width = create_char_mappings(alphabet)
 
     block_size, encrypted_block_size = _calculate_sizes(modulus, len(alphabet))
 
-    _validate_encrypted_message(encrypted_message)
+    _validate_encrypted_message(encrypted_message, encrypted_block_size)
 
     try:
         encrypted_blocks = _split_encrypted_blocks(
             encrypted_message, encrypted_block_size
         )
 
-        parts: list[str] = []
+        parts: List[str] = []
         for block in encrypted_blocks:
             if not block:
                 continue
@@ -94,9 +127,16 @@ def rsa_decrypt(
                 block_value, private_exponent, modulus
             )
             decrypted_block = _format_decrypted_block(decrypted_value, block_size)
-            parts.append(_block_to_chars(decrypted_block, num_to_char_map))
+            parts.append(
+                _block_to_chars(
+                    decrypted_block,
+                    num_to_char_map,
+                    pad_token,
+                    symbol_width,
+                )
+            )
 
         return "".join(parts)
 
-    except (ValueError, KeyError) as e:
-        raise ValueError(f"Decryption failed: {str(e)}") from e
+    except (ValidationError, KeyError) as e:
+        raise ValidationError(f"Decryption failed: {str(e)}") from e
