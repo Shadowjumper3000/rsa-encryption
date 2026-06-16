@@ -88,10 +88,8 @@ jobs:
         run: |
           version="${{ steps.new_version.outputs.version }}"
           notes="${{ github.event.release.body }}"
-          gh release edit "v${version}" --notes "## v${version}
-${notes}
-
----
-Published to PyPI: https://pypi.org/project/rsa-encryption/${version}/"
+          printf "## v%s\n\n%s\n\n---\nPublished to PyPI: https://pypi.org/project/rsa-encryption/%s/\n" \
+            "$version" "$notes" "$version" > /tmp/release-notes.md
+          gh release edit "v${version}" --notes-file /tmp/release-notes.md
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
