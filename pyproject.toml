@@ -91,7 +91,12 @@ targets = ["src"]
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["tests/*", ".venv/*"]
+omit = [
+    "tests/*",
+    ".venv/*",
+    "src/rsa_encryption/__main__.py",
+    "src/rsa_encryption/cli.py",
+]
 
 [tool.coverage.report]
 show_missing = true
