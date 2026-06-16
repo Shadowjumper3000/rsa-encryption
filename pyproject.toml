@@ -89,19 +89,6 @@ exclude = [
 exclude_dirs = ["tests", ".venv", "build", "dist"]
 targets = ["src"]
 
-[tool.coverage.run]
-source = ["src"]
-omit = [
-    "tests/*",
-    ".venv/*",
-    "src/rsa_encryption/__main__.py",
-    "src/rsa_encryption/cli.py",
-]
-
-[tool.coverage.report]
-show_missing = true
-fail_under = 80
-
 [tool.bumpversion]
 current_version = "2.0.2"
 commit = true

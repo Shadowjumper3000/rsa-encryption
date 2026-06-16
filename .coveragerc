@@ -1,0 +1,11 @@
+[run]
+source = src
+omit =
+    tests/*
+    .venv/*
+    src/rsa_encryption/__main__.py
+    src/rsa_encryption/cli.py
+
+[report]
+show_missing = true
+fail_under = 80
