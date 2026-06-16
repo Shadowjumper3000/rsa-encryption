@@ -9,9 +9,10 @@ Tests cover:
 
 import unittest
 
+from rsa_encryption.decryption import rsa_decrypt
+
 # Imports assume package is installed in editable mode (pip install -e .)
 from rsa_encryption.encryption import rsa_encrypt
-from rsa_encryption.decryption import rsa_decrypt
 from rsa_encryption.key_generation import generate_keys
 
 
@@ -85,11 +86,8 @@ class TestDecryption(unittest.TestCase):
         ]
 
         for invalid_input in test_cases:
-            with self.subTest(input=invalid_input):
-                with self.assertRaises(ValueError):
-                    rsa_decrypt(
-                        self.alphabet, self.modulus, self.priv_exp, invalid_input
-                    )
+            with self.subTest(input=invalid_input), self.assertRaises(ValueError):
+                rsa_decrypt(self.alphabet, self.modulus, self.priv_exp, invalid_input)
 
     def test_decrypt_rejects_truncated_ciphertext(self):
         """Test decryption rejects ciphertext with invalid block length."""

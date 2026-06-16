@@ -52,9 +52,8 @@ class TestEncryption(unittest.TestCase):
         ]
 
         for message in invalid_messages:
-            with self.subTest(message=message):
-                with self.assertRaises(ValueError):
-                    rsa_encrypt(self.alphabet, self.modulus, self.pub_exp, message)
+            with self.subTest(message=message), self.assertRaises(ValueError):
+                rsa_encrypt(self.alphabet, self.modulus, self.pub_exp, message)
 
     def test_encrypt_extended_alphabet(self):
         """Test encryption with extended alphabet."""

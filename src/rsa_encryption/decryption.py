@@ -5,10 +5,9 @@ responsibilities: validation, size calculation, block splitting, numeric
 decryption, formatting, and mapping digits back to characters.
 """
 
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
 
 from .exceptions import ValidationError
-
 from .utils import (
     calculate_block_size,
     create_char_mappings,

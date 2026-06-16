@@ -9,8 +9,7 @@ Tests cover:
 
 import unittest
 
-
-from rsa_encryption import generate_keys, rsa_encrypt, rsa_decrypt
+from rsa_encryption import generate_keys, rsa_decrypt, rsa_encrypt
 
 
 class TestIntegration(unittest.TestCase):
@@ -74,14 +73,19 @@ class TestIntegration(unittest.TestCase):
                             )
                             self.assertEqual(decrypted, message)
                         except Exception as e:
-                            self.fail(
-                                f"Failed for alphabet size {len(alphabet)}, message {repr(message)}: {e}"
+                            msg = (
+                                f"Failed for alphabet size {len(alphabet)},"
+                                f" message {repr(message)}: {e}"
                             )
+                            self.fail(msg)
 
     def test_long_message_handling(self):
         """Test handling of long messages that require multiple blocks."""
         alphabet = "abcdefghijklmnopqrstuvwxyz "
-        long_message = "this is a very long message that should be split into multiple blocks during encryption and then properly reconstructed during decryption"
+        long_message = (
+            "this is a very long message that should be split into multiple blocks"
+            " during encryption and then properly reconstructed during decryption"
+        )
 
         public_key, private_key = generate_keys()
         modulus, pub_exp = public_key

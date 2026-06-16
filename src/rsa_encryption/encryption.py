@@ -4,10 +4,9 @@ Refactored into small, testable functions: validation, mapping to numeric,
 chunking, padding, numeric encryption, and formatting.
 """
 
-from typing import List, Dict
+from typing import Dict, List
 
 from .exceptions import ValidationError
-
 from .utils import (
     calculate_block_size,
     create_char_mappings,

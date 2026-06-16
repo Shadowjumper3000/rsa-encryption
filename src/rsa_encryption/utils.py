@@ -1,6 +1,6 @@
 """Utility functions for the RSA encryption system."""
 
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 from .exceptions import ValidationError
 
@@ -78,7 +78,9 @@ def split_into_chunks(text: str, chunk_size: int) -> List[str]:
     return [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
 
 
-def create_char_mappings(alphabet: str) -> Tuple[Dict[str, str], Dict[str, str], str, int]:
+def create_char_mappings(
+    alphabet: str,
+) -> Tuple[Dict[str, str], Dict[str, str], str, int]:
     """
     Create character-to-number and number-to-character mappings.
 

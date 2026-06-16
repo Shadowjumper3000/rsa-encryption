@@ -7,29 +7,25 @@ generate-keys, encrypt, decrypt, and alphabet-info commands.
 """
 
 import argparse
-import sys
 import json
 import os
+import sys
 import tempfile
-from . import generate_keys, rsa_encrypt, rsa_decrypt
-from .libraries import ALPHABETS
+
+from . import generate_keys, rsa_decrypt, rsa_encrypt
 from .exceptions import ValidationError
+from .libraries import ALPHABETS
 
 
-def get_alphabet(name_or_string):
+def get_alphabet(name_or_string: str) -> str:
     """Return the alphabet string for a given name or custom string."""
     if name_or_string in ALPHABETS:
         return ALPHABETS[name_or_string]
     return name_or_string
 
 
-def generate_keys_command(args):
-    """
-    Generate RSA key pair and optionally save to a file.
-
-    :param args: Command-line arguments
-    :return: None
-    """
+def generate_keys_command(args: argparse.Namespace) -> None:
+    """Generate RSA key pair and optionally save to a file."""
     public_key, private_key = generate_keys()
 
     keys_data = {
@@ -38,9 +34,10 @@ def generate_keys_command(args):
     }
 
     if args.output:
-        # Atomic write: write to temp file then replace to avoid partial writes
         dirpath = os.path.dirname(os.path.abspath(args.output)) or "."
-        with tempfile.NamedTemporaryFile("w", delete=False, dir=dirpath, encoding="utf-8") as tmp:
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, dir=dirpath, encoding="utf-8"
+        ) as tmp:
             json.dump(keys_data, tmp, indent=2)
             tmp_name = tmp.name
         os.replace(tmp_name, args.output)
@@ -53,17 +50,12 @@ def generate_keys_command(args):
         print(json.dumps(keys_data, indent=2))
 
 
-def encrypt_command(args):
-    """
-    Encrypt a message using RSA encryption with the provided public key and alphabet.
-
-    :param args: Command-line arguments
-    :return: None
-    """
+def encrypt_command(args: argparse.Namespace) -> None:
+    """Encrypt a message using RSA with the provided public key and alphabet."""
     alphabet = get_alphabet(args.alphabet)
 
     if args.key_file:
-        with open(args.key_file, "r", encoding="utf-8") as f:
+        with open(args.key_file, encoding="utf-8") as f:
             keys_data = json.load(f)
         n = keys_data["public_key"]["n"]
         e = keys_data["public_key"]["e"]
@@ -72,9 +64,11 @@ def encrypt_command(args):
         e = args.e
 
     if n is None or e is None:
-        print(
-            "Error: Public key (n, e) must be provided either via --key-file or --n and --e"
+        msg = (
+            "Error: Public key (n, e) must be provided"
+            " either via --key-file or --n and --e"
         )
+        print(msg)
         sys.exit(1)
 
     if args.stdin and not args.message:
@@ -88,7 +82,9 @@ def encrypt_command(args):
 
         if args.output:
             dirpath = os.path.dirname(os.path.abspath(args.output)) or "."
-            with tempfile.NamedTemporaryFile("w", delete=False, dir=dirpath, encoding="utf-8") as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", delete=False, dir=dirpath, encoding="utf-8"
+            ) as tmp:
                 tmp.write(encrypted)
                 tmp_name = tmp.name
             os.replace(tmp_name, args.output)
@@ -99,17 +95,12 @@ def encrypt_command(args):
         sys.exit(1)
 
 
-def decrypt_command(args):
-    """
-    Decrypt a message using RSA decryption with the provided private key and alphabet.
-
-    :param args: Command-line arguments
-    :return: None
-    """
+def decrypt_command(args: argparse.Namespace) -> None:
+    """Decrypt a message using RSA with the provided private key and alphabet."""
     alphabet = get_alphabet(args.alphabet)
 
     if args.key_file:
-        with open(args.key_file, "r", encoding="utf-8") as f:
+        with open(args.key_file, encoding="utf-8") as f:
             keys_data = json.load(f)
         n = keys_data["private_key"]["n"]
         d = keys_data["private_key"]["d"]
@@ -118,15 +109,17 @@ def decrypt_command(args):
         d = args.d
 
     if n is None or d is None:
-        print(
-            "Error: Private key (n, d) must be provided either via --key-file or --n and --d"
+        msg = (
+            "Error: Private key (n, d) must be provided"
+            " either via --key-file or --n and --d"
         )
+        print(msg)
         sys.exit(1)
 
     if args.message:
         encrypted_message = args.message
     elif args.input:
-        with open(args.input, "r", encoding="utf-8") as f:
+        with open(args.input, encoding="utf-8") as f:
             encrypted_message = f.read().strip()
     elif args.stdin:
         encrypted_message = sys.stdin.read().strip()
@@ -147,13 +140,8 @@ def decrypt_command(args):
         sys.exit(1)
 
 
-def alphabet_info_command(_args):
-    """
-    Display available alphabet types and their characters.
-
-    :param args: Command-line arguments
-    :return: None
-    """
+def alphabet_info_command(_args: argparse.Namespace) -> None:
+    """Display available alphabet types and their characters."""
     alphabets = ALPHABETS
 
     print("Available alphabet types:")
@@ -163,10 +151,8 @@ def alphabet_info_command(_args):
     print("\nYou can also specify a custom alphabet as a string.")
 
 
-def main():
-    """
-    Main entry point for the RSA Encryption CLI tool.
-    """
+def main() -> None:
+    """Main entry point for the RSA Encryption CLI tool."""
     parser = argparse.ArgumentParser(
         description="RSA Encryption CLI Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -209,7 +195,7 @@ def main():
     decrypt_parser.add_argument(
         "--stdin",
         action="store_true",
-        help="Read encrypted message from standard input when no message or input file is provided",
+        help="Read encrypted message from stdin (when no --message or --input)",
     )
     decrypt_parser.add_argument(
         "--alphabet",

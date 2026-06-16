@@ -8,8 +8,7 @@ Tests cover:
 
 import unittest
 
-
-from rsa_encryption.key_generation import generate_keys, gcd, PRIME_NUMBERS
+from rsa_encryption.key_generation import PRIME_NUMBERS, gcd, generate_keys
 
 
 class TestKeyGeneration(unittest.TestCase):

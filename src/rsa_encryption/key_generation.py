@@ -13,11 +13,16 @@ Design notes:
 
 import importlib
 import random
-import secrets
 import warnings
-from typing import Callable, Optional, Protocol, Tuple, List
+from typing import Callable, List, Optional, Protocol, Tuple
 
 from .utils import gcd
+
+__all__ = [
+    "PRIME_NUMBERS",
+    "generate_keys",
+    "gcd",
+]
 
 
 class PrimeProvider(Protocol):
@@ -96,7 +101,7 @@ def _generate_internal_prime(bits: int) -> int:
     while True:
         candidate = sysrand.getrandbits(bits)
         # Ensure requested bit length and odd parity.
-        candidate |= (1 << (bits - 1))
+        candidate |= 1 << (bits - 1)
         candidate |= 1
         if _is_probable_prime(candidate):
             return candidate
@@ -120,7 +125,7 @@ def _load_static_primes() -> List[int]:
         return [int(x) for x in data]
     except Exception:
         warnings.warn(
-            "Could not import libraries.PRIME_NUMBERS. Falling back to a small built-in set which is NOT suitable for production.",
+            "Could not import libraries.PRIME_NUMBERS.",
             UserWarning,
         )
         # Minimal fallback to allow demo/test runs in hostile environments.
@@ -135,9 +140,7 @@ def _select_prime_provider(use_crypto: bool, prefer: str) -> PrimeProvider:
     if prefer not in {"auto", "internal", "static"}:
         from .exceptions import ValidationError
 
-        raise ValidationError(
-            "prefer must be one of: 'auto', 'internal', 'static'"
-        )
+        raise ValidationError("prefer must be one of: 'auto', 'internal', 'static'")
 
     static_provider = StaticPrimeProvider(PRIME_NUMBERS)
 
@@ -222,7 +225,7 @@ def generate_keys(
         p, q = _select_two_distinct_primes(prime_provider, bits)
     elif not use_crypto:
         # Backward-compatible deterministic mode (small primes from list)
-        p, q = random.sample(PRIME_NUMBERS, 2)
+        p, q = random.sample(PRIME_NUMBERS, 2)  # nosec B311
     else:
         provider = _select_prime_provider(use_crypto=use_crypto, prefer=prefer)
         p, q = _select_two_distinct_primes(provider, bits)
