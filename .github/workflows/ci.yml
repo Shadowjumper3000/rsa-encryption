@@ -61,4 +61,5 @@ jobs:
       - name: Check package builds
         run: |
           . .venv/bin/activate
+          pip install build
           python -m build
