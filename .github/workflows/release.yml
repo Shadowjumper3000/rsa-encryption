@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Read current version
+        id: current_version
+        run: |
+          version=$(grep '^version' pyproject.toml | head -n1 | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Determine bump type from release tag
+        id: bump_type
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "Release tag: $TAG"
+          # Default to patch; user can pre-create the tag at the desired version
+          echo "type=patch" >> "$GITHUB_OUTPUT"
+
+      - name: Increment version
+        id: new_version
+        run: |
+          IFS='.' read -r major minor patch <<< "${{ steps.current_version.outputs.version }}"
+          case "${{ steps.bump_type.outputs.type }}" in
+            major)
+              major=$((major + 1)); minor=0; patch=0
+              ;;
+            minor)
+              minor=$((minor + 1)); patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+          new_version="${major}.${minor}.${patch}"
+          echo "Bumping ${{ steps.bump_type.outputs.type }}: ${{ steps.current_version.outputs.version }} -> $new_version"
+
+      - name: Update pyproject.toml version
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ steps.new_version.outputs.version }}\"/" pyproject.toml
+
+      - name: Commit version bump and push tag
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add pyproject.toml
+          git commit -m "chore: bump version to v${{ steps.new_version.outputs.version }}"
+          git tag "v${{ steps.new_version.outputs.version }}"
+          git push origin "v${{ steps.new_version.outputs.version }}"
+
+      - name: Push version bump to main
+        run: |
+          git push origin HEAD:main
+
+      - name: Build package
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Update GitHub Release description
+        run: |
+          version="${{ steps.new_version.outputs.version }}"
+          notes="${{ github.event.release.body }}"
+          gh release edit "v${version}" --notes "## v${version}
+${notes}
+
+---
+Published to PyPI: https://pypi.org/project/rsa-encryption/${version}/"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

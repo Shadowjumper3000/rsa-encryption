@@ -5,14 +5,55 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "rsa-encryption"
 version = "2.0.2"
-description = "Educational RSA encryption library"
+description = "Educational RSA encryption library with clean API and CLI"
 readme = "README.md"
 requires-python = ">=3.8"
-authors = [ { name = "David H.", email = "shadowjumper3000@gmail.com" } ]
+license = { text = "MIT" }
+authors = [
+    { name = "David H.", email = "shadowjumper3000@gmail.com" },
+]
+keywords = [
+    "rsa",
+    "encryption",
+    "cryptography",
+    "education",
+    "public-key",
+    "cli",
+]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Security :: Cryptography",
+]
+
+[project.urls]
+Homepage = "https://github.com/Shadowjumper3000/rsa-encryption"
+Repository = "https://github.com/Shadowjumper3000/rsa-encryption"
+Documentation = "https://github.com/Shadowjumper3000/rsa-encryption#readme"
+Changelog = "https://github.com/Shadowjumper3000/rsa-encryption/blob/main/CHANGELOG.md"
+Issues = "https://github.com/Shadowjumper3000/rsa-encryption/issues"
+
+[project.scripts]
+rsa-encrypt = "rsa_encryption.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "mypy",
+    "bandit",
+    "coverage",
+    "build",
+    "pre-commit",
+    "twine",
 ]
 
 [tool.setuptools]
@@ -21,5 +62,48 @@ package-dir = { "" = "src" }
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[project.scripts]
-rsa-encrypt = "rsa_encryption.cli:main"
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "SIM", "PL"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.8"
+strict = true
+show_error_codes = true
+warn_unused_ignores = true
+exclude = [
+    "tests/",
+    "build/",
+    "dist/",
+    ".venv/",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "build", "dist"]
+targets = ["src"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", ".venv/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
+
+[tool.bumpversion]
+current_version = "2.0.2"
+commit = true
+tag = true
+tag_name = "v{new_version}"
+commit_args = "--no-verify"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
